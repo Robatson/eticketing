@@ -148,7 +148,7 @@ h1 {
     display: block
 }
 
-.card-cont a {
+/* .card-cont a {
     display: block;
     text-decoration: none;
     width: 80px;
@@ -161,7 +161,7 @@ h1 {
     position: absolute;
     right: 10px;
     bottom: 10px
-}
+} */
 
 .row:last-child .card:first-child .card-cont a {
     background-color: #037FDD
@@ -221,14 +221,8 @@ h1 {
            <span>08:55pm to 12:00 am</span>
          </time>
         </div>
-        <div class="even-info">
-          <i class="fa fa-map-marker"></i>
-          <p>
-         
-         
-          </p>
-        </div>
-        <a href="{{ URL::to('event-details/'.$event->slug) }}">tickets</a>
+       
+        <a href="{{ URL::to('event-details/'.$event->slug) }}">More Info</a>
       </section>
     </article>
 

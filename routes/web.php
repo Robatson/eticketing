@@ -43,7 +43,9 @@ Route::post('/store-event', [EventController::class, 'storeEvent']);
 Route::get('/', [EventController::class, 'display']);
 Route::get('event-details/{slug}', [EventController::class, 'displayEventDetails']);
 //payment
-Route::get('/payment', [PaymentController::class, 'paymentView']);
+Route::get('/payment/{slug}', [PaymentController::class, 'paymentView'])->name('payment');
+// Route::post('/payment/{slug}', [PaymentController::class, 'paymentView'])->name('payment');
+
 
 // Admin Pages
 Route::prefix('admin')->group(function () {
