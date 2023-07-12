@@ -1,7 +1,7 @@
 <?php
-
 use Illuminate\Support\Carbon;
 ?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -131,163 +131,180 @@ use Illuminate\Support\Carbon;
     background-color: #ff8f8f;
   }
 
+  .razorpay_btn {
+  position: relative;
+  margin-left: 25%;
+  display: block;
+  width: 200px;
+  height: 36px;
+  border-radius: 18px;
+  background-color: #1c89ff;
+  border: solid 1px transparent;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 300;
+  cursor: pointer;
+  transition: all .1s ease-in-out;
+ 
+  
+}
 
   </style>
 </head>
 <body>
-  <!-- <div class="header">
-    <h1>Event Ticket Payment</h1>
-   
-  </div> -->
-  
   <div class="container">
-  <h2>{{$event->event_name}}</h2>
-  <?php $date = Carbon::parse($event->start_date)->format('l d F Y'); ?>
-  <h2><?php echo $date; ?></h2>
-    
+    <h2>{{$event->event_name}}</h2>
+    <?php $date = Carbon::parse($event->start_date)->format('l d F Y'); ?>
+    <h2><?php echo $date; ?></h2>
+
     <form>
       <label for="name">Email:</label>
-      <input type="email" id="email" name="email" placeholder="Enter your email" required>
-      
+      <input type="email" id="email" class="email" name="email" placeholder="Enter your email" required>
+      <span id="email_error"></span><br>
       <label for="email">Phone:</label>
-      <input type="tel" id="phone" name="phone" placeholder="Enter your phone" required>
-      
+      <input type="tel" id="phone" name="phone" class="phone" placeholder="Enter your phone" required>
+      <span id="phone_error"></span><br>
       <br><br>
       <div class="quantity">
         <button type="button" class="minus-btn">-</button>
-        <input type="number" class="num-people" id="people_number" min="1" max="5" value="1" readonly>Ticket
+        <input type="number" class="num-people" id="people_number" min="1" max="5" value="1" readonly>
         <button type="button" class="plus-btn">+</button>
       </div>
       <div class="total-amount">
-      <p class="info"><span class="label">Total Amount:</span> Rs: <span id="displayTotalAmount">0</span></p>
-    </div>
-      
-      <!-- <div class="total">
-        <label for="total">Ticket Price:</label>
-        <span id="ticket-price">Rs 10.00</span>
-      </div> -->
-      
-      <input type="submit" value="Submit">
-      
+        <p class="info">Total Amount: Rs: <span id="displayTotalAmount">0</span><span class="label" id="ticketLabel"> Ticket</span></p>
+      </div>
+
+      <!-- <input type="submit" value="Submit"> -->
+      <button type="button" class="razorpay_btn">Pay</button>
     </form>
   </div>
-  
-  <!-- <div class="footer">
-    <p>&copy; 2023 Event Ticket Payment. All rights reserved.</p>
-  </div> -->
 
-  <!-- <script>
-    // Calculate total price based on quantity
-    var quantityInput = document.getElementById('quantity');
-    var ticketPriceElement = document.getElementById('ticket-price');
+  <!-- FOR RAZORPAY -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-    function updateTicketPrice() {
-      var quantity = quantityInput.value;
-      var pricePerTicket = 10.00; // Change this to the actual ticket price
-      var totalPrice = (quantity * pricePerTicket).toFixed(2);
-      ticketPriceElement.textContent = 'Rs ' + totalPrice;
+<script>
+
+  const numPeopleInput = document.querySelector('.num-people');
+  const plusBtn = document.querySelector('.plus-btn');
+  const minusBtn = document.querySelector('.minus-btn');
+  const ticketRate = <?php echo $event->ticket_price; ?>; // Get the ticket rate from PHP
+
+  let totalAmount = ticketRate; // Initialize totalAmount with the default ticket rate
+
+  // Add event listeners for plus/minus buttons
+  plusBtn.addEventListener('click', () => {
+    let numPeople = parseInt(numPeopleInput.value);
+    if (numPeople < 5) {
+      numPeople++;
+      numPeopleInput.value = numPeople;
+      updateTotalAmount(numPeople);
+    } 
+  });
+
+  minusBtn.addEventListener('click', () => {
+    let numPeople = parseInt(numPeopleInput.value);
+    if (numPeople > 1) {
+      numPeople--;
+      numPeopleInput.value = numPeople;
+      updateTotalAmount(numPeople);
+    } 
+  });
+
+  // Function to update the total amount based on the number of tickets
+  function updateTotalAmount(numPeople) {
+    totalAmount = numPeople * ticketRate; // Calculate the total amount
+    const totalAmountElement = document.getElementById('displayTotalAmount');
+    const ticketLabel = document.getElementById('ticketLabel');
+
+    totalAmountElement.textContent = totalAmount; // Update the total amount in the main page
+
+    // Update the ticket label based on the number of tickets
+    if (numPeople === 1) {
+      ticketLabel.textContent = "  " + "(" + numPeople + ' Ticket' + ")";
+      minusBtn.style.display = 'none';
+    } else {
+      ticketLabel.textContent = "  " + "(" + numPeople + ' Tickets' + ")";
+      minusBtn.style.display = 'inline-block';
     }
+    if (numPeople === 5) {
+      plusBtn.style.display = 'none';
+    } else {
+      plusBtn.style.display = 'inline-block';
+    }
+  }
 
-    // Update ticket price when quantity changes
-    quantityInput.addEventListener('change', updateTicketPrice);
-    quantityInput.addEventListener('keyup', updateTicketPrice);
+  updateTotalAmount(1);
 
-    // Plus/minus buttons functionality
-    var minusButton = document.querySelector('.minus-btn');
-    var plusButton = document.querySelector('.plus-btn');
+  $(document).ready(function () {
+    $('.razorpay_btn').click(function (e) {
+      var email = $('.email').val();
+      var phone = $('.phone').val();
+      if (!email) {
+        email_error = "Email is required";
+        $('#email_error').html('');
+        $('#email_error').html(email_error);
 
-    minusButton.addEventListener('click', function() {
-      if (quantityInput.value > 1) {
-        quantityInput.value--;
-        updateTicketPrice();
+      } else {
+        email_error = "";
+        $('#email_error').html('');
       }
-    });
+      if (!phone) {
+        phone_error = "Phone is required";
+        $('#phone_error').html('');
+        $('#phone_error').html(phone_error);
 
-    plusButton.addEventListener('click', function() {
-      quantityInput.value++;
-      updateTicketPrice();
-    });
-  </script> -->
+      } else {
+        phone_error = "";
+        $('#phone_error').html('');
+      }
+      if (email_error != "" || phone_error != "") {
+        return false;
+      }
 
-  <script>
-      // Get the ticket quantity input and plus/minus buttons
-      const numPeopleInput = document.querySelector('.num-people');
-      const plusBtn = document.querySelector('.plus-btn');
-      const minusBtn = document.querySelector('.minus-btn');
-      const ticketRate = <?php echo $event->ticket_price; ?>; // Get the ticket rate from PHP
-
-      // Add event listeners for plus/minus buttons
-      plusBtn.addEventListener('click', () => {
-        let numPeople = parseInt(numPeopleInput.value);
-        if (numPeople < 5) {
-          numPeople++;
-          numPeopleInput.value = numPeople;
-          updateTotalAmount(numPeople);
-        } else {
-          alert("Only 5 tickets can be booked at a time.");
+      var options = {
+        "key": "rzp_test_ampnuz3NWUHF0M",
+        "amount": totalAmount * 100, // Use the totalAmount variable here
+        "currency": "INR",
+        "name": "Eticketing ",
+        "description": "Thank you for choosing us",
+        "image": "https://example.com/your_logo",
+        "handler": function (response) {
+          alert(response.razorpay_payment_id);
+          alert(response.razorpay_order_id);
+          alert(response.razorpay_signature);
+        },
+        "theme": {
+          "color": "#3399cc"
         }
+      };
+
+      var prefill = {
+        "contact": phone,
+        "email": email // Add this line to include the email value
+      };
+
+      options.prefill = prefill;
+
+      var rzp1 = new Razorpay(options);
+
+      rzp1.on('payment.failed', function (response) {
+        alert(response.error.code);
+        alert(response.error.description);
+        alert(response.error.source);
+        alert(response.error.step);
+        alert(response.error.reason);
+        alert(response.error.metadata.order_id);
+        alert(response.error.metadata.payment_id);
       });
 
-      minusBtn.addEventListener('click', () => {
-        let numPeople = parseInt(numPeopleInput.value);
-        if (numPeople > 1) {
-          numPeople--;
-          numPeopleInput.value = numPeople;
-          updateTotalAmount(numPeople);
-        } else {
-          alert("Minimum 1 ticket.");
-        }
-      });
+      rzp1.open();
+      e.preventDefault();
+    });
+  });
 
-      // Function to update the total amount based on the number of tickets
-      function updateTotalAmount(numPeople) {
-        const totalAmount = numPeople * ticketRate; // Calculate the total amount
-        const totalAmountElement = document.getElementById('displayTotalAmount');
-        const modalTotalAmountElement = document.getElementById('totalAmount');
+</script>
 
-        totalAmountElement.textContent = totalAmount; // Update the total amount in the main page
-        modalTotalAmountElement.textContent = `Rs: ${totalAmount}`; // Update the total amount in the payment modal
-      }
 
-      updateTotalAmount(1);
-    </script>
-    <script>
-      function openPaymentModal() {
-        document.getElementById('paymentModal').style.display = 'block';
-        updateTotalAmount3();
-      }
-
-      function closePaymentModal() {
-        document.getElementById('paymentModal').style.display = 'none';
-      }
-
-      function showCardDetails() {
-        document.getElementById('cardDetails').style.display = 'block';
-        document.getElementById('upiDetails').style.display = 'none';
-      }
-
-      function showUpiDetails() {
-        document.getElementById('upiDetails').style.display = 'block';
-        document.getElementById('cardDetails').style.display = 'none';
-      }
-
-      function updateTotalAmount3() {
-        const numPeople = parseInt(document.querySelector('.num-people').value);
-        const ticketRate = <?php echo $event->ticket_price; ?>;
-        const totalAmount = numPeople * ticketRate;
-        document.getElementById('totalAmount').textContent = `Rs: ${totalAmount}`;
-      }
-
-      document.getElementById('payButton').addEventListener('click', function() {
-        var email = document.getElementById('email').value;
-        var phone = document.getElementById('phone').value;
-        var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-
-        // Perform payment processing based on the selected payment method and collected data
-
-        // Close the modal after payment processing
-        // closePaymentModal();
-      });
-    </script>
 </body>
 </html>
